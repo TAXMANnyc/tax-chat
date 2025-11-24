@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ask a Tax Question | TAXCPA</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #f0f4ff; }
+    #chat-response { display: flex; flex-direction: column; gap: 1rem; max-width: 500px; margin: auto; }
+    .chat-bubble { padding: 1rem; border-radius: 15px; max-width: 80%; word-wrap: break-word; }
+    .chat-user { align-self: flex-end; background: #0056b3; color: #fff; border-bottom-right-radius: 0; }
+    .chat-ai { align-self: flex-start; background: #fff; color: #222; border-bottom-left-radius: 0; }
+    #search-bar { width: 100%; padding: 1rem; font-size: 1rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+
+<h2>Ask a Tax Question</h2>
+<form id="search-form">
+  <input type="text" id="search-bar" placeholder="Type your question..." required>
+</form>
+
+<div id="chat-response"></div>
+
+<script>
+const form = document.getElementById('search-form');
+const input = document.getElementById('search-bar');
+const chatContainer = document.getElementById('chat-response');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const question = input.value.trim();
+  if (!question) return;
+
+  // User bubble
+  const userBubble = document.createElement('div');
+  userBubble.className = 'chat-bubble chat-user';
+  userBubble.textContent = question;
+  chatContainer.appendChild(userBubble);
+
+  // AI bubble
+  const aiBubble = document.createElement('div');
+  aiBubble.className = 'chat-bubble chat-ai';
+  aiBubble.textContent = 'Thinking...';
+  chatContainer.appendChild(aiBubble);
+
+  input.value = '';
+  chatContainer.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question })
+    });
+    const data = await res.json();
+    aiBubble.textContent = data.answer;
+  } catch (err) {
+    console.error(err);
+    aiBubble.textContent = 'Sorry, there was an error. Please try again.';
+  }
+});
+</script>
+
+</body>
+</html>
