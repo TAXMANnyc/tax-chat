@@ -1,27 +1,30 @@
+// pages/api/chat.js  (or app/api/chat/route.js — same code works)
+
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// This will automatically use OPENAI_API_KEY from Vercel — no need to pass it
+const openai = new OpenAI(); // ← This is the modern, safe way (2025)
 
 export default async function handler(req, res) {
-    if (req.method !== "POST") {
-        return res.status(405).json({ error: "Method not allowed" });
-    }
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
-    const { question } = req.body;
-    if (!question) return res.status(400).json({ error: "No question provided" });
+  const { prompt, model = "gpt-4o-mini" } = req.body;
 
-    try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [{ role: "user", content: question }],
-            temperature: 0.7,
-        });
+  if (!prompt) {
+    return res.status(400).json({ error: "Missing prompt" });
+  }
 
-        res.status(200).json({ answer: response.choices[0].message.content });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ answer: "Error getting response from AI." });
-    }
+  try {
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    res.status(200).json({ result: completion.choices[0].message.content });
+  } catch (error) {
+    console.error("OpenAI error:", error);
+    res.status(500).json({ error: "Failed to get response from OpenAI" });
+  }
 }
